@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 from mabwiser.base_mab import BaseMAB
-from mabwiser.utils import Arm, Num, _BaseRNG
+from mabwiser.utils import Arm, Num, _BaseRNG, argmax_2D
 
 SCALER_TOLERANCE = 1e-6
 
@@ -243,7 +243,7 @@ class _Linear(BaseMAB):
                                                         for arm in arms]).T
 
         if is_predict:
-            predictions = arms[np.argmax(arm_expectations, axis=1)].tolist()
+            predictions = arms[argmax_2D(arm_expectations)].tolist()
         else:
             predictions = [dict(zip(self.arms, value)) for value in arm_expectations]
 

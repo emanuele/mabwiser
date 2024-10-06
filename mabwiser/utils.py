@@ -9,6 +9,8 @@ import abc
 from typing import Dict, Iterable, List, NamedTuple, NewType, Tuple, Union
 
 import numpy as np
+from numpy.random import choice, uniform
+
 
 Arm = NewType('Arm', Union[int, float, str])
 """Arm type is defined as integer, float, or string."""
@@ -35,14 +37,27 @@ def argmax(dictionary: Dict[Arm, Num]) -> Arm:
     """
     Returns the first key with the maximum value.
     """
-    return max(dictionary, key=dictionary.get)
+    keys = list(dictionary.keys())
+    values = np.array(list(dictionary.values()))
+    max_indices = np.where(values == values.max())[0]
+    return keys[choice(max_indices)]
 
 
 def argmin(dictionary: Dict) -> Arm:
     """
     Returns the first key that has the minimum value.
     """
-    return min(dictionary, key=dictionary.get)
+    keys = list(dictionary.keys())
+    values = np.array(list(dictionary.values()))
+    min_indices = np.where(values == values.min())[0]
+    return keys[choice(min_indices)]
+
+
+def argmax_2D(arm_expectations):
+    return np.argmax(
+        (arm_expectations == (arm_expectations.max(1)[:, None])) * uniform(size=arm_expectations.shape),
+        axis = 1,
+    )
 
 
 def check_false(expression: bool, exception: Exception) -> None:
