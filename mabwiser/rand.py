@@ -25,9 +25,9 @@ class _Random(BaseMAB):
         # Return the arm with maximum expectation
         expectations = self.predict_expectations(contexts)
         if isinstance(expectations, dict):
-            return argmax(expectations)
+            return argmax(expectations), 1.0 / len(self.arms)
         else:
-            return [argmax(exp) for exp in expectations]
+            return [argmax(exp) for exp in expectations], 1.0 / len(self.arms) * np.ones(len(contexts))
 
     def predict_expectations(self, contexts: Optional[np.ndarray] = None) -> Union[Dict[Arm, Num],
                                                                                    List[Dict[Arm, Num]]]:

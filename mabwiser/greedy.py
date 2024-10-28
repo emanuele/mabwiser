@@ -44,11 +44,11 @@ class _EpsilonGreedy(BaseMAB):
     def predict(self, contexts: Optional[np.ndarray] = None) -> Union[Arm, List[Arm]]:
 
         # Return the arm with maximum expectation
-        expectations = self.predict_expectations(contexts)
+        expectations, p_arms = self.predict_expectations(contexts)
         if isinstance(expectations, dict):
-            return argmax(expectations)
+            return argmax(expectations), p_arms
         else:
-            return [argmax(exp) for exp in expectations]
+            return [argmax(exp) for exp in expectations], p_arms
 
     def predict_expectations(self, contexts: Optional[np.ndarray] = None) -> Union[Dict[Arm, Num],
                                                                                    List[Dict[Arm, Num]]]:
@@ -58,16 +58,20 @@ class _EpsilonGreedy(BaseMAB):
         # If contexts is None or has length of 1 generate single arm to expectations,
         # otherwise use vectorized functions to generate a list of arm to expectations with same length as contexts.
         if contexts is None or len(contexts) == 1:
-            if self.rng.rand() < self.epsilon:
-                return dict((arm, self.rng.rand()) for arm in self.arms).copy()
-            else:
-                return self.arm_to_expectation.copy()
+            if self.rng.rand() < self.epsilon: # Exploration
+                p_arms = self.epsilon / len(self.arms)
+                return dict((arm, self.rng.rand()) for arm in self.arms).copy(), p_arms
+            else: # Exploitation
+                p_arms = 1.0 - self.epsilon + self.epsilon / len(self.arms)
+                return self.arm_to_expectation.copy(), p_arms
         else:
             probability = self.rng.rand(len(contexts))
             random_values = self.rng.rand((len(contexts), len(self.arms)))
+            mask = (probability >= self.epsilon).astype(float)
+            p_arms = np.ones(probability.size) * self.epsilon / probability.size + mask * (1.0 - self.epsilon)
             expectations = [dict(zip(self.arms, exp)).copy() if probability[index] < self.epsilon
                             else self.arm_to_expectation.copy() for index, exp in enumerate(random_values)]
-            return expectations
+            return expectations, p_arms
 
     def warm_start(self, arm_to_features: Dict[Arm, List[Num]], distance_quantile: float):
         self._warm_start(arm_to_features, distance_quantile)
