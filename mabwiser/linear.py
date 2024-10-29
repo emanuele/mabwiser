@@ -243,7 +243,7 @@ class _Linear(BaseMAB):
         if len(nonrandom_context) > 0:
             arm_expectations[nonrandom_indices] = np.array([self.arm_to_model[arm].predict(nonrandom_context)[0]
                                                             for arm in arms]).T
-            p_arms[nonrandom_indices] += 1.0 - self.epsilon
+            p_arms[nonrandom_indices] = p_arms[nonrandom_indices] + 1.0 - self.epsilon
 
         if is_predict:
             predictions = arms[argmax_2D(arm_expectations)].tolist()
