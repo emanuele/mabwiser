@@ -241,7 +241,7 @@ class _Linear(BaseMAB):
         nonrandom_indices = np.where(~random_mask)[0]
         nonrandom_context = contexts[nonrandom_indices]
         if len(nonrandom_context) > 0:
-            arm_expectations[nonrandom_indices] = np.array([self.arm_to_model[arm].predict(nonrandom_context)
+            arm_expectations[nonrandom_indices] = np.array([self.arm_to_model[arm].predict(nonrandom_context)[0]
                                                             for arm in arms]).T
             p_arms[nonrandom_indices] += 1.0 - self.epsilon
 
