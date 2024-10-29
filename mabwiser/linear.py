@@ -230,19 +230,20 @@ class _Linear(BaseMAB):
 
         # With epsilon probability, assign random flag to context
         random_values = self.rng.rand(num_contexts)
-        p_arms = np.ones(num_contexts) * self.epsilon / len(arms)
         random_mask = np.array(random_values < self.epsilon)
-        p_arms[~random_mask] += 1.0 - self.epsilon
         random_indices = random_mask.nonzero()[0]
 
         # For random indices, generate random expectations
         arm_expectations[random_indices] = self.rng.rand((random_indices.shape[0], len(arms)))
+        p_arms = np.ones(num_contexts) * self.epsilon / len(arms)
 
         # For non-random indices, get expectations for each arm
         nonrandom_indices = np.where(~random_mask)[0]
         nonrandom_context = contexts[nonrandom_indices]
-        arm_expectations[nonrandom_indices] = np.array([self.arm_to_model[arm].predict(nonrandom_context)[0]
-                                                        for arm in arms]).T
+        if len(nonrandom_context) > 0:
+            arm_expectations[nonrandom_indices] = np.array([self.arm_to_model[arm].predict(nonrandom_context)
+                                                            for arm in arms]).T
+            p_arms[nonrandom_indices] += 1.0 - self.epsilon
 
         if is_predict:
             predictions = arms[argmax_2D(arm_expectations)].tolist()
