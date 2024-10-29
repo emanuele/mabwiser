@@ -235,7 +235,7 @@ class _Linear(BaseMAB):
 
         # For random indices, generate random expectations
         arm_expectations[random_indices] = self.rng.rand((random_indices.shape[0], len(arms)))
-        p_arms = np.ones(num_contexts) * self.epsilon / len(arms)
+        p_arms = np.ones(num_contexts, dtype=float) * self.epsilon / len(arms)
 
         # For non-random indices, get expectations for each arm
         nonrandom_indices = np.where(~random_mask)[0]
@@ -250,7 +250,7 @@ class _Linear(BaseMAB):
         else:
             predictions = [dict(zip(self.arms, value)) for value in arm_expectations]
 
-        return predictions if len(predictions) > 1 else predictions[0], p_arms
+        return predictions if len(predictions) > 1 else predictions[0], p_arms if len(predictions) > 1 else p_arms[0]
 
     def _drop_existing_arm(self, arm: Arm) -> None:
         self.arm_to_model.pop(arm)
