@@ -230,7 +230,9 @@ class _Linear(BaseMAB):
 
         # With epsilon probability, assign random flag to context
         random_values = self.rng.rand(num_contexts)
+        p_arms = np.ones(num_contexts) * self.epsilon / len(arms)
         random_mask = np.array(random_values < self.epsilon)
+        p_arms[~random_mask] += 1.0 - self.epsilon
         random_indices = random_mask.nonzero()[0]
 
         # For random indices, generate random expectations
@@ -247,7 +249,7 @@ class _Linear(BaseMAB):
         else:
             predictions = [dict(zip(self.arms, value)) for value in arm_expectations]
 
-        return predictions if len(predictions) > 1 else predictions[0]
+        return predictions if len(predictions) > 1 else predictions[0], p_arms
 
     def _drop_existing_arm(self, arm: Arm) -> None:
         self.arm_to_model.pop(arm)
