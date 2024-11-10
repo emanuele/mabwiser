@@ -8,7 +8,7 @@ from typing import Callable, Dict, List, Optional, Union
 import numpy as np
 
 from mabwiser.base_mab import BaseMAB
-from mabwiser.utils import Arm, Num, _BaseRNG, argmax, reset
+from mabwiser.utils import Arm, Num, _BaseRNG, argmax, reset, get_max_indices
 
 
 class _UCB1(BaseMAB):
@@ -60,9 +60,13 @@ class _UCB1(BaseMAB):
         # Return the arm with maximum expectation
         expectations = self.predict_expectations(contexts)
         if isinstance(expectations, dict):
-            return argmax(expectations)
+            # if there are ties, probability decreases:
+            p_arms = 1.0 / len(get_max_indices(expectations))
+            return argmax(expectations), p_arm
         else:
-            return [argmax(exp) for exp in expectations]
+            # if there are ties, probability decreases:
+            p_arms = [1.0 / len(get_max_indices(exp)) for exp in expectations]
+            return [argmax(exp) for exp in expectations], p_arm
 
     def predict_expectations(self, contexts: Optional[np.ndarray] = None) -> Union[Dict[Arm, Num],
                                                                                    List[Dict[Arm, Num]]]:
