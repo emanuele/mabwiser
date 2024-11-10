@@ -44,34 +44,41 @@ class _EpsilonGreedy(BaseMAB):
     def predict(self, contexts: Optional[np.ndarray] = None) -> Union[Arm, List[Arm]]:
 
         # Return the arm with maximum expectation
-        expectations, p_arms = self.predict_expectations(contexts)
+        expectations, p_arms = self.predict_expectations(contexts, is_predict=True)
         if isinstance(expectations, dict):
             return argmax(expectations), p_arms
         else:
             return [argmax(exp) for exp in expectations], p_arms
 
-    def predict_expectations(self, contexts: Optional[np.ndarray] = None) -> Union[Dict[Arm, Num],
-                                                                                   List[Dict[Arm, Num]]]:
+    def predict_expectations(self, contexts: Optional[np.ndarray] = None, is_predict: bool = False) -> Union[Dict[Arm, Num],
+                                                                                                             List[Dict[Arm, Num]]]:
 
         # Return a random expectation (between 0 and 1) for each arm with epsilon probability,
         # and the actual arm expectations otherwise.
         # If contexts is None or has length of 1 generate single arm to expectations,
         # otherwise use vectorized functions to generate a list of arm to expectations with same length as contexts.
         if contexts is None or len(contexts) == 1:
-            if self.rng.rand() < self.epsilon: # Exploration
+            if self.rng.rand() < self.epsilon: # Exploration:
                 p_arms = self.epsilon / len(self.arms)
-                return dict((arm, self.rng.rand()) for arm in self.arms).copy(), p_arms
-            else: # Exploitation
-                p_arms = 1.0 - self.epsilon + self.epsilon / len(self.arms)
-                return self.arm_to_expectation.copy(), p_arms
+                results = dict((arm, self.rng.rand()) for arm in self.arms).copy(), p_arms
+            else: # Exploitation:
+                # p_arms = (1-epsilon) / #ties + epsilon / #arms
+                p_arms = (1.0 - self.epsilon) / len(get_max_indices(self.arm_to_expectation)) + self.epsilon / len(self.arms)
+                results = self.arm_to_expectation.copy(), p_arms
         else:
             probability = self.rng.rand(len(contexts))
             random_values = self.rng.rand((len(contexts), len(self.arms)))
             mask = (probability >= self.epsilon).astype(float)
+            # TODO: how to handle ties in p_arms for multiple contexts? Does it happen?
             p_arms = np.ones(probability.size) * self.epsilon / probability.size + mask * (1.0 - self.epsilon)
             expectations = [dict(zip(self.arms, exp)).copy() if probability[index] < self.epsilon
                             else self.arm_to_expectation.copy() for index, exp in enumerate(random_values)]
-            return expectations, p_arms
+            results = expectations, p_arms
+
+        if is_predict:
+            return results
+        else:
+            return results[0]
 
     def warm_start(self, arm_to_features: Dict[Arm, List[Num]], distance_quantile: float):
         self._warm_start(arm_to_features, distance_quantile)
