@@ -54,27 +54,36 @@ class _Softmax(BaseMAB):
     def predict(self, contexts: Optional[np.ndarray] = None) -> Union[Arm, List[Arm]]:
 
         # Return the arm with maximum expectation
-        expectations = self.predict_expectations(contexts)
+        expectations, p_arms_dict_list = self.predict_expectations(contexts, is_predict=True)
         if isinstance(expectations, dict):
-            return argmax(expectations)
+            arm =  argmax(expectations)
+            return arm, p_arms_dict_list[arm]
         else:
-            return [argmax(exp) for exp in expectations]
+            arms = [argmax(exp) for exp in expectations]
+            return arms, np.array([p_arms_dict[arm] for p_arms_dict, arm in zip(p_arms_dict_list, arms)])
 
-    def predict_expectations(self, contexts: Optional[np.ndarray] = None) -> Union[Dict[Arm, Num],
-                                                                                   List[Dict[Arm, Num]]]:
+    def predict_expectations(self, contexts: Optional[np.ndarray] = None, is_predict: bool = False) -> Union[Dict[Arm, Num],
+                                                                                                             List[Dict[Arm, Num]]]:
 
         # Return a random value between 0 and 1 for each arm that is "proportional" to the
         # expectation of the arm and sums to 1 by sampling from a Dirichlet distribution.
         # The Dirichlet distribution can be seen as a multivariate generalization of the Beta distribution.
         # Add a very small epsilon to ensure each of the expectations is positive.
         size = 1 if contexts is None else len(contexts)
-        alpha = [v + np.finfo(float).eps for v in self.arm_to_expectation.values()]
+        alpha = np.array([v + np.finfo(float).eps for v in self.arm_to_expectation.values()])
         dirichlet_random_values = self.rng.dirichlet(alpha, size)
         expectations = [dict(zip(self.arm_to_expectation.keys(), exp)).copy() for exp in dirichlet_random_values]
+        p_arms = alpha / alpha.sum()
+        p_arms_dict_list = [dict(zip(exp.keys(), p_arms)).copy() for exp in expectations]
         if size == 1:
-            return expectations[0]
+            result = expectations[0], p_arms_dict_list[0]
         else:
-            return expectations
+            result = expectations, p_arms_dict_list
+
+        if is_predict:
+            return result
+        else:
+            result[0]
 
     def warm_start(self, arm_to_features: Dict[Arm, List[Num]], distance_quantile: float):
         self._warm_start(arm_to_features, distance_quantile)
