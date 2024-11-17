@@ -65,7 +65,7 @@ class _UCB1(BaseMAB):
             return argmax(expectations), p_arm
         else:
             # if there are ties, probability decreases:
-            p_arm = [1.0 / len(get_max_indices(exp)) for exp in expectations]
+            p_arm = np.array([1.0 / len(get_max_indices(exp)) for exp in expectations])
             return [argmax(exp) for exp in expectations], p_arm
 
     def predict_expectations(self, contexts: Optional[np.ndarray] = None) -> Union[Dict[Arm, Num],
