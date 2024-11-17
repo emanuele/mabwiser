@@ -37,9 +37,11 @@ class _Popularity(_EpsilonGreedy):
         # Return the arm with maximum expectation
         expectations = self.predict_expectations(contexts)
         if isinstance(expectations, dict):
-            return argmax(expectations)
+            arm =  argmax(expectations)
+            return arm, expectations[arm].item()
         else:
-            return [argmax(exp) for exp in expectations]
+            arms = [argmax(exp) for exp in expectations]
+            return arms, np.array([exp[arm].item() for arm, exp in zip(arms, expectations)])
 
     def predict_expectations(self, contexts: Optional[np.ndarray] = None) -> Union[Dict[Arm, Num],
                                                                                    List[Dict[Arm, Num]]]:
