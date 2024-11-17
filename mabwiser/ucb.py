@@ -61,11 +61,11 @@ class _UCB1(BaseMAB):
         expectations = self.predict_expectations(contexts)
         if isinstance(expectations, dict):
             # if there are ties, probability decreases:
-            p_arms = 1.0 / len(get_max_indices(expectations))
+            p_arm = 1.0 / len(get_max_indices(expectations))
             return argmax(expectations), p_arm
         else:
             # if there are ties, probability decreases:
-            p_arms = [1.0 / len(get_max_indices(exp)) for exp in expectations]
+            p_arm = [1.0 / len(get_max_indices(exp)) for exp in expectations]
             return [argmax(exp) for exp in expectations], p_arm
 
     def predict_expectations(self, contexts: Optional[np.ndarray] = None) -> Union[Dict[Arm, Num],
