@@ -7,7 +7,7 @@ from typing import Callable, Dict, List, Optional, Union
 import numpy as np
 
 from mabwiser.base_mab import BaseMAB
-from mabwiser.utils import Arm, Num, _BaseRNG, argmax, reset
+from mabwiser.utils import Arm, Num, _BaseRNG, argmax, reset, get_max_indices
 
 
 class _EpsilonGreedy(BaseMAB):
