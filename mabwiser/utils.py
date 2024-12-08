@@ -33,13 +33,19 @@ class Constants(NamedTuple):
     """The distance metrics supported by neighborhood policies."""
 
 
+def get_max_indices(dictionary):
+    keys = list(dictionary.keys())
+    values = np.array(list(dictionary.values()))
+    max_indices = np.where(values == values.max())[0]
+    return max_indices
+
+
 def argmax(dictionary: Dict[Arm, Num]) -> Arm:
     """
     Returns the first key with the maximum value.
     """
     keys = list(dictionary.keys())
-    values = np.array(list(dictionary.values()))
-    max_indices = np.where(values == values.max())[0]
+    max_indices = get_max_indices(dictionary)
     return keys[choice(max_indices)]
 
 
