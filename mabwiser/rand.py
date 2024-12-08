@@ -43,6 +43,12 @@ class _Random(BaseMAB):
         else:
             return expectations
 
+    def predict_arm_proba(self, contexts: Optional[np.ndarray] = None) -> Union[Dict[Arm, Num],
+                                                                                   List[Dict[Arm, Num]]]:
+        arm_proba = {arm: 1/len(self.arms) for arm in self.arms}
+        size = 1 if contexts is None else len(contexts)
+        return arm_proba if size==1 else [arm_proba.copy() for _ in range(size)]
+
     def warm_start(self, arm_to_features: Dict[Arm, List[Num]], distance_quantile: float):
         pass
 
