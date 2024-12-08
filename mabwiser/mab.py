@@ -1248,6 +1248,44 @@ class MAB:
         # Return a dictionary from arms (key) to expectations (value)
         return self._imp.predict_expectations(contexts)
 
+    def predict_arm_proba(self,
+                          contexts: Union[None, List[Num], List[List[Num]],
+                                          np.ndarray, pd.Series, pd.DataFrame] = None  # Contexts, optional
+                          ) -> Union[Dict[Arm, Num], List[Dict[Arm, Num]]]:
+        """Returns a dictionary of arms (key) to their probabilities (value).
+
+        Contextual learning policies and neighborhood policies require contexts data for probabilities.
+
+        Parameters
+        ----------
+        contexts : Union[None, List[Num], List[List[Num]], np.ndarray, pd.Series, pd.DataFrame]
+            The context for the expected rewards. Default value is None.
+            If contexts is not ``None`` for context-free bandits, the predicted expectations returned will be a
+            list of the same length as contexts.
+
+        Returns
+        -------
+        The dictionary of arms (key) to their probabilities (value), or a list of such dictionaries.
+
+        Raises
+        ------
+        TypeError:  Contexts is not given as ``None``, list, numpy array or pandas data frames.
+
+        ValueError: Prediction with context policy requires context data.
+        """
+
+        # Check that fit is called before
+        check_true(self._is_initial_fit, Exception("Call fit before prediction"))
+
+        # Validate arguments
+        self._validate_predict_args(contexts)
+
+        # Convert contexts to numpy array for efficiency
+        contexts = self.__convert_context(contexts)
+
+        # Return a dictionary from arms (key) to probabilities (value)
+        return self._imp.predict_arm_proba(contexts)
+
     def warm_start(self, arm_to_features: Dict[Arm, List[Num]], distance_quantile: float) -> None:
         """Warm-start untrained (cold) arms of the multi-armed bandit.
 
