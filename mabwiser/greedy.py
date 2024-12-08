@@ -7,7 +7,7 @@ from typing import Callable, Dict, List, Optional, Union
 import numpy as np
 
 from mabwiser.base_mab import BaseMAB
-from mabwiser.utils import Arm, Num, _BaseRNG, argmax, reset
+from mabwiser.utils import Arm, Num, _BaseRNG, argmax, reset, get_max_indices
 
 
 class _EpsilonGreedy(BaseMAB):
@@ -68,6 +68,17 @@ class _EpsilonGreedy(BaseMAB):
             expectations = [dict(zip(self.arms, exp)).copy() if probability[index] < self.epsilon
                             else self.arm_to_expectation.copy() for index, exp in enumerate(random_values)]
             return expectations
+
+    def predict_arm_proba(self, contexts: Optional[np.ndarray] = None) -> Union[Dict[Arm, Num],
+                                                                                List[Dict[Arm, Num]]]:
+        arm_proba = {arm:(self.epsilon/len(self.arms)) for arm in self.arms}
+        keys = list(self.arm_to_expectation.keys())
+        max_indices = get_max_indices(self.arm_to_expectation)
+        for idx in max_indices:
+            arm_proba[keys[idx]] += (1 - self.epsilon) / len(max_indices)
+
+        size = 1 if contexts is None else len(contexts)
+        return arm_proba if size==1 else [arm_proba.copy() for _ in range(size)]
 
     def warm_start(self, arm_to_features: Dict[Arm, List[Num]], distance_quantile: float):
         self._warm_start(arm_to_features, distance_quantile)
