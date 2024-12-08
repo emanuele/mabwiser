@@ -8,7 +8,7 @@ from typing import Callable, Dict, List, Optional, Union
 import numpy as np
 
 from mabwiser.base_mab import BaseMAB
-from mabwiser.utils import Arm, Num, _BaseRNG, argmax, reset
+from mabwiser.utils import Arm, Num, _BaseRNG, argmax, reset, get_max_indices
 
 
 class _UCB1(BaseMAB):
@@ -72,6 +72,17 @@ class _UCB1(BaseMAB):
             return self.arm_to_expectation.copy()
         else:
             return [self.arm_to_expectation.copy() for _ in range(len(contexts))]
+
+    def predict_arm_proba(self, contexts: Optional[np.ndarray] = None) -> Union[Dict[Arm, Num],
+                                                                                List[Dict[Arm, Num]]]:
+        arm_proba = {arm:0 for arm in self.arms}
+        keys = list(self.arm_to_expectation.keys())
+        max_indices = get_max_indices(self.arm_to_expectation)
+        for idx in max_indices:
+            arm_proba[keys[idx]] = 1 / len(max_indices)
+
+        size = 1 if contexts is None else len(contexts)
+        return arm_proba if size==1 else [arm_proba.copy() for _ in range(size)]
 
     def warm_start(self, arm_to_features: Dict[Arm, List[Num]], distance_quantile: float):
         self._warm_start(arm_to_features, distance_quantile)
