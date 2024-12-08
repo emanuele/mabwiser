@@ -58,6 +58,14 @@ class _Popularity(_EpsilonGreedy):
         else:
             return expectations
 
+    def predict_arm_proba(self, contexts: Optional[np.ndarray] = None) -> Union[Dict[Arm, Num],
+                                                                                List[Dict[Arm, Num]]]:
+        alpha = np.array([v + np.finfo(float).eps for v in self.arm_to_expectation.values()])
+        proba = (alpha / alpha.sum()).tolist()
+        arm_proba = {arm:p for arm, p in zip(self.arms, proba)}
+        size = 1 if contexts is None else len(contexts)
+        return arm_proba if size==1 else [arm_proba.copy() for _ in range(size)]
+
     def _normalize_expectations(self):
         # TODO: this would not work for negative rewards!
         total = sum(self.arm_to_expectation.values())
