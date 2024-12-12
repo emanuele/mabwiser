@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 from mabwiser.base_mab import BaseMAB
-from mabwiser.utils import Arm, Num, _BaseRNG, argmax_2D
+from mabwiser.utils import Arm, Num, _BaseRNG, argmax_2D, get_max_indices
 
 SCALER_TOLERANCE = 1e-6
 
@@ -178,6 +178,17 @@ class _Linear(BaseMAB):
     def predict_expectations(self, contexts: np.ndarray = None) -> Union[Dict[Arm, Num], List[Dict[Arm, Num]]]:
         # Return predict expectations for the given context
         return self._vectorized_predict_context(contexts, is_predict=False)
+
+    def predict_arm_proba(self, contexts: np.ndarray = None) -> Union[Dict[Arm, Num], List[Dict[Arm, Num]]]:
+        arm_to_expectation = {arm:self.arm_to_model[arm].predict(contexts) for arm in self.arms}
+        arm_proba = {arm:(self.epsilon/len(self.arms)) for arm in self.arms}
+        keys = list(arm_to_expectation.keys())
+        max_indices = get_max_indices(arm_to_expectation)
+        for idx in max_indices:
+            arm_proba[keys[idx]] += (1 - self.epsilon) / len(max_indices)
+
+        size = 1 if contexts is None else len(contexts)
+        return arm_proba if size==1 else [arm_proba.copy() for _ in range(size)]
 
     def warm_start(self, arm_to_features: Dict[Arm, List[Num]], distance_quantile: float):
         self._warm_start(arm_to_features, distance_quantile)
